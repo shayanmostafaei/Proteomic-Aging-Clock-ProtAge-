@@ -1,0 +1,75 @@
+# ProtAge: Group-wise (Age & Sex) Modeling
+library(dplyr)
+library(glmnet)
+library(mlr3)
+library(mlr3learners)
+library(mlr3pipelines)
+library(nnet)
+library(xgboost)
+library(caret)
+
+set.seed(123) 
+# cleaned_protein_data includes columns: age, sex, protein features
+data_for_ml <- cleaned_protein_data %>%
+  mutate(age = as.numeric(age), sex = as.factor(sex))
+
+# Define age groups
+data_for_ml <- data_for_ml %>%
+  mutate(age_group = case_when(
+    age < 50 ~ "<50",
+    age >= 50 & age <= 60 ~ "50-60",
+    age > 60 ~ ">60"
+  ))
+
+results <- list()
+groups <- expand.grid(age_group = c("<50", "50-60", ">60"), sex = c(0, 1))
+
+for (i in 1:nrow(groups)) {
+  group <- groups[i, ]
+  group_train <- data_for_ml %>% filter(age_group == group$age_group, sex == group$sex)
+  if (nrow(group_train) > 0) {
+    # Feature selection
+    x_train <- as.matrix(group_train %>% select(-age, -sex, -age_group))
+    y_train <- group_train$age
+    enet_model <- cv.glmnet(x_train, y_train, alpha = 0.5)
+    selected_features <- coef(enet_model, s = "lambda.min") %>% as.matrix() %>% rownames() %>% .[. != "(Intercept)"]
+    if (length(selected_features) == 0) next
+    group_train <- group_train %>% select(all_of(selected_features), age)
+    task <- TaskRegr$new(id = paste0("age_prediction_", i), backend = group_train, target = "age")
+    learner_xgb <- lrn("regr.xgboost", nrounds=500, eta=0.03, max_depth=6)
+    learner_rf <- lrn("regr.ranger", num.trees=1000, min.node.size=3)
+    learner_nn <- lrn("regr.nnet", size=5, linout=TRUE, maxit=200)
+    stacked_pipeline <- gunion(list(
+      po("learner_cv", learner_xgb),
+      po("learner_cv", learner_rf),
+      po("learner_cv", learner_nn)
+    )) %>>% po("featureunion") %>>% po("learner", lrn("regr.glmnet"))
+    stacked_learner <- as_learner(stacked_pipeline)
+    stacked_learner$train(task)
+    results[[paste(group$age_group, group$sex, sep = "_")]] <- stacked_learner
+
+    # Predict on training data for plotting
+    pred <- stacked_learner$predict(task)
+    group_data <- group_train
+    group_data$predicted_age <- pred$response
+
+    # Scatter plot for the group
+    correlation <- cor(group_data$age, group_data$predicted_age)
+    r_squared <- correlation^2
+    rmse <- sqrt(mean((group_data$age - group_data$predicted_age)^2))
+    mae <- mean(abs(group_data$age - group_data$predicted_age))
+
+    plot(group_data$age, group_data$predicted_age,
+         xlab = "Actual Age",
+         ylab = "Predicted Age (ProtAge)",  # Title adjusted to reflect predicted age
+         main = paste("Group:", paste(group$age_group, group$sex, sep = ", "),
+                      "\nCorrelation:", round(correlation, 2),
+                      "| R-squared:", round(r_squared, 2),
+                      "| MAE:", round(mae, 2),
+                      "| RMSE:", round(rmse, 2)),
+         pch = 19, col = "green", cex = 0.6)  # Green color for points
+
+    # Add a reference line (ideal case where predicted = actual)
+    abline(0, 1, col = "red", lwd = 2)
+  }
+}
