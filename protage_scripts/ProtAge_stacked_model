@@ -1,0 +1,60 @@
+# ProtAge Stacked Ensemble Model
+library(dplyr)
+library(glmnet)
+library(mlr3)
+library(mlr3learners)
+library(mlr3pipelines)
+library(xgboost)
+library(nnet)
+library(caret)
+library(ggplot2)
+
+set.seed(123)
+# Assume cleaned_protein_data includes columns: age, sex, protein features
+data_for_ml <- cleaned_protein_data %>%
+  mutate(age = as.numeric(age))
+
+train_index <- sample(1:nrow(data_for_ml), 0.8 * nrow(data_for_ml))
+train_data <- data_for_ml[train_index, ]
+test_data <- data_for_ml[-train_index, ]
+
+# Feature selection
+x_train <- as.matrix(train_data %>% select(-age))
+y_train <- train_data$age
+enet_model <- cv.glmnet(x_train, y_train, alpha = 0.5)
+selected_features <- coef(enet_model, s = "lambda.min") %>% as.matrix() %>% rownames() %>% .[. != "(Intercept)"]
+train_data <- train_data %>% select(all_of(selected_features), age)
+test_data <- test_data %>% select(all_of(selected_features), age)
+
+# Stacked ensemble 
+task <- TaskRegr$new(id="age_prediction", backend=train_data, target="age")
+learner_xgb <- lrn("regr.xgboost", nrounds=500, eta=0.03, max_depth=6)
+learner_rf <- lrn("regr.ranger", num.trees=1000, min.node.size=3)
+learner_nn <- lrn("regr.nnet", size=5, linout=TRUE, maxit=200)
+stacked_pipeline <- gunion(list(
+  po("learner_cv", learner_xgb),
+  po("learner_cv", learner_rf),
+  po("learner_cv", learner_nn)
+)) %>>% po("featureunion") %>>% po("learner", lrn("regr.glmnet"))
+stacked_learner <- as_learner(stacked_pipeline)
+stacked_learner$train(task)
+
+# Evaluation
+task_test <- TaskRegr$new(id="age_prediction_test", backend=test_data, target="age")
+predictions <- stacked_learner$predict(task_test)
+rmse <- predictions$score(msr("regr.rmse"))
+mae <- predictions$score(msr("regr.mae"))
+correlation <- cor(test_data$age, predictions$response)
+sse <- sum((test_data$age - predictions$response)^2)
+sst <- sum((test_data$age - mean(test_data$age))^2)
+r_squared <- 1 - (sse / sst)
+
+cat("RMSE:", rmse, "\nMAE:", mae, "\nCorrelation:", correlation, "\nR-squared:", round(r_squared,2), "\n")
+
+# Scatter plot
+ggplot(data = data.frame(actual = test_data$age, predicted = predictions$response),
+       aes(x = actual, y = predicted)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_abline(slope = 1, intercept = 0, color = "red", size = 1.2) +
+  labs(title = "Actual vs Predicted Age (ProtAge)", x = "Actual Age", y = "Predicted Age") +
+  theme_minimal()
