@@ -17,7 +17,7 @@ This repository contains the code and workflow for constructing the Proteomic Ag
 - `ProtAge_imputation.R`: KNN imputation for missing values.
 - `ProtAge_outlier_detection.R`: Outlier detection and exclusion.
 - `ProtAge_stacked_model.R`: Main model training and evaluation.
--  ProtAge_sexwise_models.R`:Dedicated script for training and evaluating ProtAge separately for Women and Men
+- `ProtAge_sexwise_models.R`: Dedicated script for training and evaluating ProtAge separately for Women and Men
 - `ProtAge_groupwise_models.R`: Age/sex subgroup modeling.
 - `README.md`: This file.
 - `LICENSE`: License
