@@ -7,9 +7,8 @@ This repository contains the code and workflow for constructing the Proteomic Ag
 - **Normalization**: Box-Cox transformation to address skewed distributions.
 - **Missing Value Imputation**: k-Nearest Neighbors (k=10).
 - **Outlier Detection**: Machine learning methods (Isolation Forest). 
-- **Modeling**: Stacked ensemble (XGBoost, Random Forest, Neural Network) with Elastic Net Regression as a meta-learner.
+- **Modeling**: Stacked ensemble (XGBoost, LightGBM, CatBoost) with Elastic Net Regression as a meta-learner.
 - **Sex-wise Modeling**: Separate models for Men and Women, addressing sex-specific proteomic aging rates.
-- **Subgroup Modeling**: Separate models for age (Under 50, 50-59, 60 and older) and sex groups.
 
   ## Files
 
@@ -18,7 +17,6 @@ This repository contains the code and workflow for constructing the Proteomic Ag
 - `ProtAge_outlier_detection.R`: Outlier detection and exclusion.
 - `ProtAge_stacked_model.R`: Main model training and evaluation.
 - `ProtAge_sexwise_models.R`: Dedicated script for training and evaluating ProtAge separately for Women and Men
-- `ProtAge_groupwise_models.R`: Age/sex subgroup modeling.
 - `README.md`: This file.
 - `LICENSE`: License
 
