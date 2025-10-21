@@ -1,13 +1,13 @@
 # ProtAge: Proteomic Aging Clock
 
-This repository contains the code and workflow for constructing the Proteomic Aging Clock ("ProtAge") using Olink NPX proteomic data from the UK Biobank.
+This repository contains the code and workflow for constructing the Proteomic Aging Clock (**ProtAge**) using **Olink NPX proteomic data** and **Stacked Ensemble models** in the UK Biobank.
 
 ## Overview
 
 - **Normalization**: Box-Cox transformation to address skewed distributions.
 - **Missing Value Imputation**: k-Nearest Neighbors (k=10).
 - **Outlier Detection**: Machine learning methods (Isolation Forest). 
-- **Modeling**: Stacked ensemble (XGBoost, LightGBM, CatBoost) with Elastic Net Regression as a meta-learner.
+- **Modeling**: Stacked ensemble (XGBoost, LightGBM, CatBoost) with Elastic Net (α = 0.5) Regression as a meta-learner. 
 - **Sex-wise Modeling**: Separate models for Men and Women, addressing sex-specific proteomic aging rates.
 
   ## Files
@@ -15,8 +15,7 @@ This repository contains the code and workflow for constructing the Proteomic Ag
 - `ProtAge_feature_selection.R`: Feature selection and preprocessing.
 - `ProtAge_imputation.R`: KNN imputation for missing values.
 - `ProtAge_outlier_detection.R`: Outlier detection and exclusion.
-- `ProtAge_stacked_model.R`: Main model training and evaluation.
-- `ProtAge_sexwise_models.R`: Dedicated script for training and evaluating ProtAge separately for Women and Men
+- `ProtAge_stacked_model.R`: Main models training and evaluation separately for Women and Men. 
 - `README.md`: This file.
 - `LICENSE`: License
 
@@ -25,6 +24,12 @@ This repository contains the code and workflow for constructing the Proteomic Ag
 1. Prepare your Olink NPX proteomic data in R.
 2. Run the scripts in order as listed above.
 3. Follow the instructions and comments in each script for detailed steps and configuration.
+
+## Sensitivity Analysis
+
+1. Compared stacked ensemble vs. single models (XGBoost, LightGBM, CatBoost).
+2. Stacked ensemble consistently achieved highest correlation and lowest RMSE/MAE across sexes.
+3. Details and results are provided in Table S1 of the manuscript. 
 
 ## Reference
 
