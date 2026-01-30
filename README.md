@@ -13,7 +13,7 @@ ProtAge produces predicted “proteomic age” estimates that can be used as a b
 - Required metadata: **participant ID**, **sex**, **chronological age**
 
 **Preprocessing & modeling**
-- **Missing value imputation**: **KNN imputation (k = 10)**
+- **Missing value imputation**: **KNN imputation (k = 9)**
 - **Outlier detection**: **Isolation Forest (iForest)** to identify and exclude outliers in high-dimensional proteomic space
 - **Modeling**: **Stacked ensemble** combining:
   - Base learners: **XGBoost**, **LightGBM**, **CatBoost**
@@ -44,7 +44,7 @@ Stacking consistently outperformed all single base learners (XGBoost, LightGBM, 
    Loads NPX data, performs basic QC / feature handling (as needed), prepares the modeling matrix.
 
 2. `ProtAge_imputation.R`  
-   Performs **KNN imputation (k = 10)** for missing NPX values.
+   Performs **KNN imputation (k = 9)** for missing NPX values.
 
 3. `ProtAge_outlier_detection.R`  
    Detects and removes outliers using **Isolation Forest (iForest)**.
