@@ -1,6 +1,6 @@
 # ============================================================
 # ProtAge_imputation.R
-# Missing value imputation for Olink NPX using KNN (k = 10)
+# Missing value imputation for Olink NPX using KNN (k = 9)
 # Input  : results/protage_step1_feature_selection/protage_step1_npx_ready.rds
 # Output : results/protage_step2_imputation/protage_step2_imputed.rds
 # Used by: ProtAge_outlier_detection.R
@@ -29,7 +29,7 @@ SEX_COL <- "sex"
 AGE_COL <- "age"
 
 # KNN settings
-K_IMPUTE <- 10
+K_IMPUTE <- 9
 
 # --------------------------
 # LOAD DATA (AFTER STEP 1)
@@ -66,7 +66,7 @@ imputation_summary_before <- data.frame(
 )
 
 # --------------------------
-# KNN IMPUTATION (k = 10)
+# KNN IMPUTATION (k = 9)
 # NOTE: VIM::kNN appends indicator columns by default.
 # --------------------------
 
